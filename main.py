@@ -91,7 +91,7 @@ def run_iperf(iperf_ip, iperf_port, reversed=False):
     match = re.search(regex, res)
     num = float(match.group(1))
     logger.info(f"IPerf done, reversed={reversed}")
-    return IPerfRun(timestamp, num,False)
+    return IPerfRun(timestamp, num, False)
 
 
 def run_speed_tests(iperf_ip, iperf_port) -> SpeedTestResults:
@@ -135,7 +135,6 @@ def get_nearby_networks_info() -> List[NetworkInfo]:
 
 
 CURRENT_POSITION: Location = None
-
 
 nmea_exception: Optional[Exception] = None
 
@@ -195,9 +194,25 @@ def scan_signals():
     logger.info(f"Recorded time={datetime.fromtimestamp(timestamp)},location={location},devices_count={len(devices)}")
 
 
+def connect_network(test_bssid: str, password: str):
+    command = ["nmcli", "device", "wifi", "connect", test_bssid, "password", password]
+    res = subprocess.run(command, stdout=subprocess.PIPE)
+    if res.returncode != 0:
+        logger.error("Connect failed")
+        raise Exception
+
+
+def disconnect_network():
+    command = ["nmcli", "device", "wifi", "disconnect"]
+    res = subprocess.run(command, stdout=subprocess.pipe)
+    if res.returncode != 0:
+        logger.error("Connect failed")
+        raise Exception
+
+
 def test_speed(test_bssid: str, password: str, iperf_ip: str, iperf_port: int):
-    # todo connect network
     global CURRENT_POSITION
+    connect_network(test_bssid, password)
     timestamp = time.time()
     location = CURRENT_POSITION
     speed_res = run_speed_tests(iperf_ip, iperf_port)
